@@ -10,11 +10,12 @@ Note: Use at your own risk. Scraping data may be in violation of flight company'
 ## Installation
 1. Clone/download repository:<br>
 `git clone https://github.com/broadtoad/Flight_Tracker.git`
-2. Install requirements and Chrome WebDriver:<br>
-`cd Flight_Tracker`
-`python setup.py install`
+2. Install Chrome WebDriver:<br>
 `brew install chromedriver`
 3. Sign up for an account with [Twilio](https://www.twilio.com/) and edit `twilio.json` to receive notifications
+4. Install application<br>
+`cd Flight_Tracker` `python setup.py install`
+    * Note, if edits are made to `twilio.json` you must either rerun `python setup.py install` or specify the new file location using `--twilio` argument.
 
 For flight tracking, I recommend running the script on [Amazon Web Services](https://aws.amazon.com/free/) (it's free, and you can protect yourself from incurring fees by using a Visa gift card). If using Amazon Web Services, run `sh install_chromedriver_aws.sh` to install Chrome WebDriver.
 
