@@ -1,0 +1,18 @@
+# Python files
+__pycache__/
+*.py[cod]
+
+# Distribution
+build/
+*.egg-info/
+*.egg
+dist/
+.idea/
+venv*/
+
+# Other
+flights.log
+twilio.json
+multiple_flights_template.txt
+.DS_Store
+merge_with_master.sh

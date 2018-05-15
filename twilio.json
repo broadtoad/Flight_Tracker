@@ -1,0 +1,6 @@
+{
+"account": "twilio_account",
+"auth_token": "auth_token",
+"from": "twilio_phone_num",
+"to": "notification_phone_num"
+}
