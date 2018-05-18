@@ -77,21 +77,21 @@ class FlightSearch(object):
         return self.convert_to_datetime(self.depart_date)
 
     @property
-    def southwest_url(self):
-        sw_query = 'https://www.southwest.com/air/booking/select.html?'
+    def flight_search_dict(self):
         sw_keys = ['originationAirportCode', 'destinationAirportCode', 'returnAirportCode',
                    'departureDate', 'departureTimeOfDay', 'returnDate', 'returnTimeOfDay',
                    'adultPassengersCount', 'seniorPassengersCount', 'fareType', 'passengerType',
-                   'tripType', 'promoCode']
+                   'tripType', 'promoCode', 'reset', 'redirectToVision', 'int',
+                   'leapfrogRequest', 'application', 'site']
         sw_values = [self.origin, self.destination, self.return_destination,
                      self.depart_date_str, self.depart_time,
                      self.return_date_str, self.return_time_str,
                      self.num_passengers, self.senior_passengers, self.faretype, self.passenger_type,
-                     self.triptype, self.promo_code]
+                     self.triptype, self.promo_code, 'true', 'true', 'HOMEQBOMAIR',
+                     'true', 'air-booking', 'southwest']
         sw_values = [x if x is not None else '' for x in sw_values]
         sw_dict = OrderedDict(zip(sw_keys, sw_values))
-        sw_query += '&'.join(['{}={}'.format(k, v) for k, v in sw_dict.items()])
-        return sw_query
+        return sw_dict
 
     def __str__(self):
         outstr = ('Flight on {} from {} to {} (triptype={}, faretype={}, '
@@ -115,7 +115,7 @@ class FlightSearch(object):
 
 class FlightRecord(FlightSearch):
     def __init__(self, origin, destination, depart_date, depart_time, arrival_time,
-                 flight_numbers, price, search_instance):
+                 flight_numbers, price, fare_class, search_instance):
         self.origin = origin
         self.destination = destination
         self.depart_date = depart_date
@@ -124,6 +124,7 @@ class FlightRecord(FlightSearch):
         self.flight_numbers = flight_numbers
         self.search_instance = search_instance
         self.price = price * self.search_instance.num_passengers
+        self.fare_class = fare_class
 
     @property
     def triptype(self):
@@ -138,9 +139,17 @@ class FlightRecord(FlightSearch):
         return self.search_instance.price_point
 
     @property
+    def price_str(self):
+        if self.faretype == 'USD':
+            return '$' + '{0:.2f}'.format(self.price)
+        else:
+            return str(int(self.price)) + ' points'
+
+    @property
     def output_list(self):
-        return [self.origin, self.destination, self.depart_date_str, self.depart_time,
-                self.arrival_time, str(self.flight_numbers), str(self.price)]
+        return [self.origin, self.destination, self.depart_date, self.depart_time,
+                self.arrival_time, str(self.flight_numbers), self.price_str,
+                self.fare_class]
 
 
 class TripRecord(object):
@@ -158,19 +167,22 @@ class TripRecord(object):
     def __repr__(self):
         return 'TripRecord({})'.format(self.flights)
 
+    def _convert_price_to_str(self, price):
+        if self.faretype == 'USD':
+            return '$' + '{0:.2f}'.format(price)
+        else:
+            return str(int(price)) + ' points'
+
     @property
     def price_difference(self):
         price_flights = self.price
         price_point = self.price_point
         if price_flights < price_point:
-            return price_point - price_flights
+            return self._convert_price_to_str(price_point - price_flights)
 
     @property
     def price_str(self):
-        if self.faretype == 'USD':
-            return '$' + str(self.price)
-        else:
-            return str(self.price) + ' points'
+        return self._convert_price_to_str(self.price)
 
     @property
     def output_string(self):
@@ -178,11 +190,17 @@ class TripRecord(object):
         origin = flight_info.origin
         destination = flight_info.destination
         date = flight_info.depart_date_dt.strftime('%m/%d/%y')
+        flight_numbers = flight_info.flight_numbers
+        depart_time = flight_info.depart_time
+        arrival_time = flight_info.arrival_time
         out_str = ('Alert: Flights from {} to {} on {} have gone down in price. '
-                   'Current price is {} which is {} below threshold.')
+                   'Current price is {} which is {} below threshold.\n\nFlight Numbers: {}\n'
+                   'Departure: {}\nArrival: {}')
         price_str = self.price_str
         price_difference = self.price_difference
-        out_str = out_str.format(origin, destination, date, price_str, price_difference)
+        out_str = out_str.format(origin, destination, date, price_str,
+                                 price_difference, flight_numbers, depart_time,
+                                 arrival_time)
         return out_str
 
 
@@ -199,8 +217,7 @@ def create_flight_search_from_args(args):
                 args.flight_numbers = [args.flight_numbers]
         args.flight_numbers = [list(map(int, x.split(','))) for x in args.flight_numbers]
     flight_args = args.__dict__.copy()
-    remove_args = ['threshold', 'twilio', 'username', 'password',
-                   'frequency', 'multiple', 'func']
+    remove_args = ['twilio', 'frequency', 'multiple', 'func']
     for e_arg in remove_args:
         del flight_args[e_arg]
     return FlightSearch(**flight_args)
@@ -228,10 +245,7 @@ def create_flight_searches_from_file(args):
 
 
 def create_flight_searches(args):
-    if args.username and args.password:
-        from .web_scraper import check_sw_account
-        flight_searches = check_sw_account(args)
-    elif args.multiple:
+    if args.multiple:
         flight_searches = create_flight_searches_from_file(args)
     else:
         flight_searches = [create_flight_search_from_args(args)]

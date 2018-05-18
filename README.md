@@ -1,23 +1,21 @@
 # Flight_Tracker
-Tool to monitor airline flights and optionally send notifications when prices go below a set threshold/price point.
+Tool to monitor airline flights (SW) and optionally send notifications when prices go below a set threshold/price point.
 
-Tool can be used to monitor reward purchases, cheapest roundtrip or oneway flights, or specific flights using the `--flight_numbers` flag.
-For reward purchases, the user's flight itineraries are checked and notifications are sent when flights decrease in value by a set `--threshold`.
+Tool can be used to monitor cheapest roundtrip or oneway flights, or specific flights using the `--flight_numbers` flag.
 
-Note: Use at your own risk. Scraping data may be in violation of flight company's Terms of Service.
+Notes: Use at your own risk. Scraping data may be in violation of flight company's Terms of Service.
+Flight tracking by user account has been removed. SW changes their website too often for this to work
+long term.
 
 
 ## Installation
 1. Clone/download repository:<br>
 `git clone https://github.com/broadtoad/Flight_Tracker.git`
-2. Install Chrome WebDriver:<br>
-`brew install chromedriver`
-3. Sign up for an account with [Twilio](https://www.twilio.com/) and edit `twilio.json` to receive notifications
-4. Install application<br>
+2. Sign up for an account with [Twilio](https://www.twilio.com/) and edit `twilio.json` to receive notifications
+3. Install application<br>
 `cd Flight_Tracker` `python setup.py install`
-    * Note, if edits are made to `twilio.json` you must either rerun `python setup.py install` or specify the new file location using `--twilio` argument.
 
-For flight tracking, I recommend running the script on [Amazon Web Services](https://aws.amazon.com/free/) (it's free, and you can protect yourself from incurring fees by using a Visa gift card). If using Amazon Web Services, run `sh install_chromedriver_aws.sh` to install Chrome WebDriver.
+For flight tracking, I recommend running the script on [Amazon Web Services](https://aws.amazon.com/free/) (it's free, and you can protect yourself from incurring fees by using a Visa gift card).
 
 Tested on AWS Linux, MacOS, Python2.7, Python3.6
 
@@ -30,24 +28,19 @@ usage: flight_tracker [options]
 Tool to monitor airline flights and optionally send notifications
 when prices go below a set threshold/price point.
 
-Track reward flights in Southwest Account (for the churners out there):
-flight_tracker -u username -p password [options]
-
 Track cheapest flight (one way):
 flight_tracker -o origin -d destination -l depart_date [options]
 
 Track cheapest flights (round trip):
-flight_tracker -o origin -d destination -l depart_date  -r return_date [options]
+flight_tracker -o origin -d destination -l depart_date -r return_date [options]
+
+Track multiple flights:
+flight_tracker -m multiple_flights.txt
 
 optional arguments:
   -h, --help            show this help message and exit
   -f , --frequency      Frequency (in minutes) for checking flights [180]
   -la, --logall         Write/print all available flights
-
-Southwest Account:
-  -u , --username       Southwest username
-  -p , --password       Southwest password
-  -t , --threshold      Threshold (price difference) for notification [1000]
 
 Track a Flight:
   -o , --origin         Flight origin (airport code)
@@ -110,6 +103,3 @@ Note: You can opt out of notifications by setting `--twilio None` or leaving `tw
 [swa-dashboard](https://github.com/gilby125/swa-dashboard)
 
 [SWA-Scraper](https://github.com/wcrasta/SWA-Scraper) @wcrasta
-
-## To Do
-- [ ] Change code base to use apis rather than Selenium/Chrome Webdriver (in progress)

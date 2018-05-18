@@ -1,2 +1,1 @@
-selenium==3.11.0
 twilio==6.12.1

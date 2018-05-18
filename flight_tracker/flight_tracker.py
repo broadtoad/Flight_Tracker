@@ -41,7 +41,7 @@ def check_all_flights(args, flight_searches, price_notifications):
         price_difference = get_price_difference(cheapest_flights)
         if price_difference and price_difference not in price_notifications[flight_search]:
             out_str = cheapest_flights.output_string
-            logger.info(out_str)
+            logger.info(out_str.replace('\n', ' '))
             notify(args, out_str)
             price_notifications[flight_search].add(price_difference)
         elif price_difference:

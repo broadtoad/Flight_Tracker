@@ -1,21 +1,22 @@
 """ Command line parser """
-
+import pkg_resources
 import argparse
 import os
+
 
 script_name = 'flight_tracker'
 description = """
 Tool to monitor airline flights and optionally send notifications
 when prices go below a set threshold/price point.\n
-Track reward flights in Southwest Account (for the churners out there):
-{0} -u <username> -p <password> [options]\n
 Track cheapest flight (one way):
-{0} -o <origin> -d <destination> -l <depart_date> [options]\n
+{0} -o origin -d destination -l depart_date [options]\n
 Track cheapest flights (round trip):
-{0} -o <origin> -d <destination> -l <depart_date>  -r <return_date> [options]
+{0} -o origin -d destination -l depart_date -r return_date [options]\n
+Track multiple flights:
+{0} -m multiple_flights.txt
 """
 description = description.format(script_name)
-twilio_file = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'twilio.json'))
+twilio_file = pkg_resources.resource_filename(__name__, 'twilio.json')
 
 
 def parse_cl_arguments():
@@ -35,22 +36,6 @@ def parse_cl_arguments():
                         '--logall',
                         action='store_true',
                         help='Write/print all available flights')
-    # SW Account
-    swaccount = parser.add_argument_group('Southwest Account')
-    swaccount.add_argument('-u',
-                           '--username',
-                           metavar='',
-                           help='Southwest username')
-    swaccount.add_argument('-p',
-                           '--password',
-                           metavar='',
-                           help='Southwest password')
-    swaccount.add_argument('-t',
-                           '--threshold',
-                           metavar='',
-                           type=int,
-                           default=1000,
-                           help='Threshold (price difference) for notification [%(default)s]')
     # Flight Tracker
     track_flight = parser.add_argument_group('Track a Flight')
     track_flight.add_argument('-o',
