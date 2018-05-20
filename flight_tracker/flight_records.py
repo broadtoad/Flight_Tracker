@@ -14,14 +14,15 @@ class FlightSearch(object):
                  return_date=None, return_time=None, passengers=1,
                  senior_passengers=0, faretype='POINTS', passenger_type='ADULT',
                  promo_code=None, price_point=0, flight_numbers=None, logall=False,
-                 nonstop=False):
+                 nonstop=False, companion=False):
         self.origin = origin
         self.destination = destination
         self.depart_date = depart_date
         self.depart_time = depart_time
         self.return_date = return_date
         self.return_time = return_time
-        self.num_passengers = int(passengers)
+        self.companion = companion
+        self.num_passengers = 2 if self.companion else int(passengers)
         self.senior_passengers = senior_passengers
         self.faretype = faretype
         self.passenger_type = passenger_type
@@ -123,7 +124,7 @@ class FlightRecord(FlightSearch):
         self.arrival_time = arrival_time
         self.flight_numbers = flight_numbers
         self.search_instance = search_instance
-        self.price = price * self.search_instance.num_passengers
+        self.price = price if self.search_instance.companion else price * (self.search_instance.num_passengers)
         self.fare_class = fare_class
 
     @property

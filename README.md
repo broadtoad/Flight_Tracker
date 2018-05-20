@@ -51,8 +51,9 @@ Track a Flight:
   -rt , --return_time   Return time {ALL_DAY, BEFORE_NOON, NOON_TO_SIX, AFTER_SIX} [ALL_DAY]
   -x , --passengers     Number of passengers [1]
   -ft , --faretype      Fare type {POINTS, USD} [POINTS]
-  -c , --price_point    Price point to receive notification [1]
+  -p , --price_point    Price point to receive notification [1]
   -ns, --nonstop        Only track non-stop flights
+  -c, --companion       Companion booking (set passengers = 2, report price for 1)
   -n  [ ...], --flight_numbers  [ ...]
                         Flight number (separate by spaces if separate flights,
                         or commas if connecting flights)
@@ -68,19 +69,19 @@ Notification Settings:
 Track a single flight:
 <pre>
 # Track oneway flight and notify if less than $150
-flight_tracker -o PHL -d BNA -l 07/12/18 -c 150 -ft USD
+flight_tracker -o PHL -d BNA -l 07/12/18 -p 150 -ft USD
 
 # Track oneway flight (nonstop only) and notify if less than $150
-flight_tracker -o PHL -d BNA -l 07/12/18 -c 150 -ft USD -ns
+flight_tracker -o PHL -d BNA -l 07/12/18 -p 150 -ft USD -ns
 
 # List all roundtrip flight options
 flight_tracker -o PHL -d BNA -l 07/12/18 -r 07/20/18 -la -f 0
 
 # Track roundtrip flight and notify if less than 20000 points
-flight_tracker -o PHL -d BNA -l 07/12/18 -r 07/20/18 -c 20000
+flight_tracker -o PHL -d BNA -l 07/12/18 -r 07/20/18 -p 20000
 
 # Track specific rountrip flight and notify if less than $400
-flight_tracker -o PHL -d BNA -l 07/12/18 -r 07/20/18 -c 400 -n 2506,2568 874 -ft USD
+flight_tracker -o PHL -d BNA -l 07/12/18 -r 07/20/18 -p 400 -n 2506,2568 874 -ft USD
 </pre>
 Track multiple flights:
 

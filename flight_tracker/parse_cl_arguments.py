@@ -80,7 +80,7 @@ def parse_cl_arguments():
                               default='POINTS',
                               choices=['POINTS', 'USD'],
                               help='Fare type {%(choices)s} [%(default)s]')
-    track_flight.add_argument('-c',
+    track_flight.add_argument('-p',
                               '--price_point',
                               type=float,
                               default=1,
@@ -91,6 +91,11 @@ def parse_cl_arguments():
                               action='store_const',
                               const='True',
                               help='Only track non-stop flights')
+    track_flight.add_argument('-c',
+                              '--companion',
+                              action='store_const',
+                              const='True',
+                              help='Companion booking (set passengers = 2, report price for 1)')
     track_flight.add_argument('-n',
                               '--flight_numbers',
                               metavar='',
