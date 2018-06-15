@@ -1,11 +1,10 @@
 # Flight_Tracker
 Tool to monitor airline flights (SW) and optionally send notifications when prices go below a set threshold/price point.
 
-Tool can be used to monitor cheapest roundtrip or oneway flights, or specific flights using the `--flight_numbers` flag.
+Tool can be used to monitor cheapest roundtrip or oneway flights, or specific flights using the `--flight_numbers` flag. If you're not sure where you would like to fly, you can also check for the cheapest flights for all
+available destinations using the `--flight_finder` flag (experimental).
 
 Notes: Use at your own risk. Scraping data may be in violation of flight company's Terms of Service.
-Flight tracking by user account has been removed. SW changes their website too often for this to work
-long term.
 
 
 ## Installation
@@ -37,6 +36,9 @@ flight_tracker -o origin -d destination -l depart_date -r return_date [options]
 Track multiple flights:
 flight_tracker -m multiple_flights.txt
 
+Find a destination:
+flight_tracker -o origin -l depart_date -ff [supports Track a Flight args]
+
 optional arguments:
   -h, --help            show this help message and exit
   -f , --frequency      Frequency (in minutes) for checking flights [180]
@@ -63,6 +65,9 @@ Track Multiple Flights:
 
 Notification Settings:
   -a , --twilio         Twilio account config file [twilio.json]
+
+Find a Destination:
+  -ff, --flight_finder  List cheapest flights for all available destinations (supports Track a Flight args)
 </pre>
 
 ## Examples
@@ -97,6 +102,10 @@ Track multiple flights:
 
 <pre>
 flight_tracker -m multiple_flights.txt
+</pre>
+Find your next destination using flight_finder:
+<pre>
+flight_tracker -o PHL -l 07/12/18 -r 07/20/18 -ff [supports Track a Flight args]
 </pre>
 Note: You can opt out of notifications by setting `--twilio None` or leaving `twilio.json` as is.
 

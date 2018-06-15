@@ -124,7 +124,7 @@ class FlightRecord(FlightSearch):
         self.arrival_time = arrival_time
         self.flight_numbers = flight_numbers
         self.search_instance = search_instance
-        self.price = price if self.search_instance.companion else price * (self.search_instance.num_passengers)
+        self.price = price if self.search_instance.companion else price * self.search_instance.num_passengers
         self.fare_class = fare_class
 
     @property
@@ -204,11 +204,26 @@ class TripRecord(object):
                                  arrival_time)
         return out_str
 
+    @property
+    def output_list(self):
+        if len(self.flights) == 1:
+            flight = self.flights[0]
+            return [flight.origin, flight.destination, flight.depart_date, flight.depart_time,
+                    flight.arrival_time, ','.join(map(str, flight.flight_numbers)), self.price_str,
+                    str(flight.fare_class)]
+        else:
+            flight1, flight2 = self.flights
+            return [flight1.origin, flight1.destination, flight1.depart_date, flight1.depart_time,
+                    flight1.arrival_time, flight2.depart_date, flight2.depart_time, flight2.arrival_time,
+                    '{} {}'.format(','.join(map(str, flight1.flight_numbers)), ','.join(map(str, flight2.flight_numbers))),
+                    self.price_str, '{}, {}'.format(flight1.fare_class, flight2.fare_class)]
+
 
 def create_flight_search_from_args(args):
     """ Creates FlightSearch object from args """
     if not (args.origin and args.destination and args.depart_date):
-        sys.exit('Origin, destination and depart date are required for flight tracking')
+        if not args.flight_finder:
+            sys.exit('Origin, destination and depart date are required for flight tracking')
     # Fix flight numbers
     if args.flight_numbers:
         if not isinstance(args.flight_numbers, list):
@@ -218,7 +233,7 @@ def create_flight_search_from_args(args):
                 args.flight_numbers = [args.flight_numbers]
         args.flight_numbers = [list(map(int, x.split(','))) for x in args.flight_numbers]
     flight_args = args.__dict__.copy()
-    remove_args = ['twilio', 'frequency', 'multiple', 'func']
+    remove_args = ['twilio', 'frequency', 'multiple', 'func', 'flight_finder']
     for e_arg in remove_args:
         del flight_args[e_arg]
     return FlightSearch(**flight_args)

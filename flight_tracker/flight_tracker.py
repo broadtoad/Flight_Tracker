@@ -7,6 +7,7 @@ from .parse_cl_arguments import parse_cl_arguments
 from .flight_records import create_flight_searches
 from .utils import notify
 from .web_scraper import find_cheapest_flights
+from .web_scraper import find_all_destinations
 
 
 logger = logging.getLogger()
@@ -67,6 +68,10 @@ def main():
         sys.exit()
 
     flight_searches = create_flight_searches(args)
+    if args.flight_finder:
+        find_all_destinations(flight_searches)
+        sys.exit()
+
     price_notifications = defaultdict(set)
     while True:
         check_all_flights(args, flight_searches, price_notifications)

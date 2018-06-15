@@ -1,7 +1,6 @@
 """ Command line parser """
 import pkg_resources
 import argparse
-import os
 
 
 script_name = 'flight_tracker'
@@ -13,7 +12,9 @@ Track cheapest flight (one way):
 Track cheapest flights (round trip):
 {0} -o origin -d destination -l depart_date -r return_date [options]\n
 Track multiple flights:
-{0} -m multiple_flights.txt
+{0} -m multiple_flights.txt\n
+Find a destination:
+flight_tracker -o origin -l depart_date -ff [supports Track a Flight args]\n
 """
 description = description.format(script_name)
 twilio_file = pkg_resources.resource_filename(__name__, 'twilio.json')
@@ -117,4 +118,9 @@ def parse_cl_arguments():
                                type=str,
                                default=twilio_file,
                                help='Twilio account config file [%(default)s]')
+    find_flight = parser.add_argument_group('Find a Destination')
+    find_flight.add_argument('-ff',
+                             '--flight_finder',
+                             action='store_true',
+                             help='List cheapest flights for all available destinations (supports Track a Flight args)')
     return parser.parse_args()

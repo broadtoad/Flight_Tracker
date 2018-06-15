@@ -2,14 +2,13 @@
 
 from collections import OrderedDict
 from datetime import datetime
+import pkg_resources
 import logging
-import re
 import requests
 import json
 
 
 from .flight_records import (
-    FlightSearch,
     FlightRecord,
     TripRecord
 )
@@ -31,17 +30,27 @@ class SWApi(object):
         self._session = requests.Session()
         self.base_url = 'https://www.southwest.com/'
         self.flights_api = 'api/air-booking/v1/air-booking/page/air/booking/shopping'
+        self.flight_routes = 'fragments/generated/route_map/routeInfo_1_1.json'
+        self.success_codes = [200]
 
-    def post(self, url, **kwargs):
-        success_codes = [200, 400]
-        response = self._session.post(url, verify=False, **kwargs)
+    def _check_status_code(self, response):
         status_code = response.status_code
-        if status_code not in success_codes:
-            print(response.text)
+        if status_code not in self.success_codes:
+            # print(response.text)
             err = 'Invalid status code received. Expected {}. Received {}.'
-            raise Exception(err.format(success_codes, status_code))
+            raise Exception(err.format(self.success_codes, status_code))
         else:
             return response.text
+
+    def post(self, url, **kwargs):
+        response = self._session.post(url, verify=False, **kwargs)
+        result = self._check_status_code(response)
+        return result
+
+    def get(self, url):
+        response = self._session.get(url, verify=False)
+        result = self._check_status_code(response)
+        return result
 
     def _get_url(self, api):
         return self.base_url + api
@@ -51,12 +60,17 @@ class SWApi(object):
         api_key = mobile_api if mobile_api else api_key
         return {'x-api-key': api_key,
                 'content-type': 'application/json',
-                'token': self.access_token if hasattr(self, 'access_token') else None
+                'token': self.access_token if hasattr(self, 'access_token') else None,
+                'user-agent': 'Chrome',
                 }
 
     def retrieve_raw_flight_data(self, search_data):
         flight_api_url = self._get_url(self.flights_api)
         return self.post(flight_api_url, data=json.dumps(search_data), headers=self._get_headers())
+
+    def retrieve_flight_routes(self):
+        route_url = self._get_url(self.flight_routes)
+        return self.get(route_url)
 
 
 def convert_to_datetime(date, fmt='%Y-%m-%dT%H:%M:%S',
@@ -72,13 +86,11 @@ def convert_to_datetime(date, fmt='%Y-%m-%dT%H:%M:%S',
         return date_datetime
 
 
-def retrieve_flight_data(args, sw_api):
-    """ Use SW_API to return list of FlightRecord objects """
-    logstr = 'Collecting all available flights from {} to {} on {}'
-    logger.info(logstr.format(args.origin, args.destination, args.depart_date_str))
-    search_data = args.flight_search_dict
-    raw_data = sw_api.retrieve_raw_flight_data(search_data)
-    data = json.loads(raw_data)
+def parse_flight_data(data, args):
+    """
+    Accepts a data dict from SWApi retrieve_raw_flight_data
+    and args and returns a list of FlightRecord objects
+    """
     flight_results = data['data']['searchResults']['airProducts']
     flight_options = []
     for flight_route in flight_results:
@@ -100,7 +112,20 @@ def retrieve_flight_data(args, sw_api):
                                              depart_time, arrival_time, flight_numbers,
                                              price, fare_class, args)
                 flight_options.append(flight_option)
-    logger.info('Found {} flights'.format(len(flight_options)))
+    return flight_options
+
+
+def retrieve_flight_data(args, sw_api):
+    """ Use SW_API to return list of FlightRecord objects """
+    logstr = 'Collecting all available flights from {} to {} on {}'
+    logger.info(logstr.format(args.origin, args.destination, args.depart_date_str))
+    search_data = args.flight_search_dict
+    raw_data = sw_api.retrieve_raw_flight_data(search_data)
+    data = json.loads(raw_data)
+    if not data['data']:
+        return None
+    flight_options = parse_flight_data(data, args)
+    logger.info('Found {} flight routes'.format(len(flight_options)))
     if args.logall:
         header = ['Origin', 'Destination', 'Date', 'DepartTime', 'ArriveTime',
                   'FlightNums', 'Price', 'FareClass']
@@ -157,3 +182,70 @@ def find_cheapest_flights(flight_search):
             if len(flight_results) != 2:
                 return None
         return TripRecord(flight_results)
+
+
+def get_flight_route_dict():
+    """
+    Reads json file containing SW flight route information
+    key: airport code
+    value: dict with keys display_name, federal_unit, routes_served
+    """
+    routes_file = pkg_resources.resource_filename(__name__, 'airport_routes.json')
+    routes_dict = json.load(open(routes_file, 'r'))
+    return routes_dict
+
+
+def change_to_long_names(flight_options, route_dict):
+    """
+    Changes first flight information (used in TripRecords) to long
+    format so that it's clearer when outputting table
+    """
+    for triprecord in flight_options:
+        flight_info = triprecord.flights[0]
+        city_o = route_dict[flight_info.origin]['display_name']
+        fed_unit_o = route_dict[flight_info.origin]['federal_unit']
+        city_d = route_dict[flight_info.destination]['display_name']
+        fed_unit_d = route_dict[flight_info.destination]['federal_unit']
+        flight_info.origin = '{}, {}'.format(city_o, fed_unit_o)
+        flight_info.destination = '{}, {}'.format(city_d, fed_unit_d)
+
+
+def find_all_destinations(flight_searches):
+    """
+    Uses origin from flight_search to find all available flights to all
+    destinations offered by SW. Note: this is a lot of requests to SW
+    and should be used sparingly.
+    """
+    logger.info('Searching for the cheapest flights for all destinations')
+    logger.info('Note: this may take a while (a sorted table will be printed when finished)')
+    flight_search = flight_searches[0]
+    origin = flight_search.origin
+    route_dict = get_flight_route_dict()
+    destinations = route_dict[origin]['routes_served']
+    flight_options = []
+    for destination in destinations:
+        flight_search.destination = destination
+        try:
+            flights = find_cheapest_flights(flight_search)
+        except:
+            logger.info('Found 0 flight routes')
+            continue
+        if not flights:
+            continue
+        flight_options.append(flights)
+
+    flight_options = sorted(flight_options, key=lambda x: x.price)
+    change_to_long_names(flight_options, route_dict)
+    data = [x.output_list for x in flight_options]
+    if data:
+        if len(data[0]) > 8:
+            header = ['Origin', 'Destination', 'Depart_Date', 'DepartTime', 'ArriveTime',
+                      'ReturnDate', 'DepartTime', 'ReturnTime', 'FlightNums', 'Price', 'FareClass']
+        else:
+            header = ['Origin', 'Destination', 'Date', 'DepartTime', 'ArriveTime',
+                      'FlightNums', 'Price', 'FareClass']
+        table = create_table(header, data)
+        logstr = 'Printing results table:\n\n{}\n'.format(table)
+        logger.info(logstr)
+    else:
+        logger.info('No flights found')

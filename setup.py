@@ -15,11 +15,9 @@ setup(
     author="broadtoad",
     author_email='broadtoad@gmail.com',
     url='https://github.com/broadtoad/Flight_Tracker/',
-    packages=[
-        'flight_tracker',
-    ],
+    packages=['flight_tracker'],
     package_dir={'flight_tracker': 'flight_tracker'},
-    data_files=[('flight_tracker', ['twilio.json'])],
+    data_files=[('flight_tracker', ['twilio.json', 'airport_routes.json'])],
     install_requires=requirements,
     license="MIT",
     zip_safe=False,
