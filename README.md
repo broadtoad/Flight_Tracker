@@ -111,5 +111,3 @@ Note: You can opt out of notifications by setting `--twilio None` or leaving `tw
 
 ## Inspirations
 [swa-dashboard](https://github.com/gilby125/swa-dashboard)
-
-[SWA-Scraper](https://github.com/wcrasta/SWA-Scraper) @wcrasta
