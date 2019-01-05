@@ -148,7 +148,7 @@ def get_minimum_fare(all_fares):
             currency_type = fare_info['currencyCode']
             fares.append([fare_type, fare_price, currency_type])
     if fares:
-        return min((fare for fare in fares), key=lambda x: x[1])
+        return min((fare for fare in fares), key=lambda x: float(x[1]))
 
 
 def find_cheapest_flights(flight_search):
